@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Практическая работа №4: машинные операции</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#eef2f6;--card:#fff;--ink:#14213d;--mut:#5b6785;--line:#d5dce8;--mem:#0f766e;--reg:#c2410c;--ok:#15803d;--bad:#b91c1c;--hl:#fde68a;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1424;--card:#16213a;--ink:#e8edf7;--mut:#9aa7c4;--line:#2a3857;--mem:#5eead4;--reg:#fdba74;--ok:#4ade80;--bad:#f87171;--hl:#5a4a10;}}
+:root[data-theme="dark"]{--bg:#0d1424;--card:#16213a;--ink:#e8edf7;--mut:#9aa7c4;--line:#2a3857;--mem:#5eead4;--reg:#fdba74;--ok:#4ade80;--bad:#f87171;--hl:#5a4a10;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.5rem;line-height:1.2;margin:8px 0 4px}
+h2{font-size:1.15rem;margin:0 0 8px}
+p{margin:6px 0}
+.sub{color:var(--mut);margin-bottom:12px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 10px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);z-index:5}
+nav button{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 14px;border-radius:999px;font:inherit;cursor:pointer}
+nav button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+section{display:none}section.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px}
+code,.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.desk{border-left:5px solid var(--reg)}.store{border-left:5px solid var(--mem)}
+button.b{border:0;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:8px;font:inherit;cursor:pointer}
+button.b.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+button:focus-visible,textarea:focus-visible,input:focus-visible{outline:3px solid var(--reg);outline-offset:2px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.cells{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.cell{border:2px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center;transition:background .4s,border-color .4s}
+.cell small{display:block;color:var(--mut);font-size:.72rem;min-height:2.2em;line-height:1.1}
+.cell b{font-size:1.2rem}.cell input{width:100%;font:inherit;font-weight:700;text-align:center;background:transparent;color:var(--ink);border:0;border-bottom:1px dashed var(--mut)}
+.cell.m{border-color:var(--mem)}.cell.r{border-color:var(--reg)}
+.cell.flash{background:var(--hl)}
+.lbl{font-weight:700;margin:10px 0 4px}.lbl.m{color:var(--mem)}.lbl.r{color:var(--reg)}
+textarea{width:100%;min-height:150px;font:15px/1.6 ui-monospace,Menlo,Consolas,monospace;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px}
+.prog{font:15px/1.7 ui-monospace,Menlo,Consolas,monospace;margin:6px 0;padding:4px}
+.prog div{padding:0 8px;border-radius:6px}.prog div.cur{background:var(--hl);font-weight:700}.prog div.done{color:var(--mut)}
+.say{min-height:3em;padding:8px 10px;background:var(--bg);border-radius:8px}
+.res{font-weight:700;margin-top:6px}.ok{color:var(--ok)}.bad{color:var(--bad)}
+select{font:inherit;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink);width:100%}
+details{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--card)}
+summary{cursor:pointer;font-weight:600}
+.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.tip{background:var(--hl);border-radius:8px;padding:8px 10px;margin:8px 0}
+@media(max-width:520px){.two{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Практическая работа №4</h1>
+<p class="sub">Последовательность машинных операций для простых вычислений. ОП.03 Архитектура аппаратных средств</p>
+<nav role="tablist">
+<button role="tab" aria-selected="true" data-t="t1">Теория</button>
+<button role="tab" aria-selected="false" data-t="t2">Симулятор</button>
+<button role="tab" aria-selected="false" data-t="t3">Жизнь</button>
+<button role="tab" aria-selected="false" data-t="t4">Вопросы</button>
+</nav>
+
+<section id="t1" class="on">
+<div class="card"><h2>Главная идея</h2>
+<p>Процессор не умеет считать «в памяти». Он берёт числа в свои быстрые ячейки (<b>регистры</b>), считает там, и только потом кладёт результат обратно. Это как повар: продукты лежат на складе, а резать их можно только на рабочем столе.</p></div>
+<div class="two">
+<div class="card store"><h2>Память = склад</h2><p>Большая, но далеко. Адреса: A, B, C, Y.</p></div>
+<div class="card desk"><h2>Регистры = стол</h2><p>Маленькие, но рядом и быстрые: R0, R1, R2.</p></div>
+</div>
+<div class="card"><h2>6 команд</h2>
+<p><code>LOAD R, X</code> — со склада на стол (память X → регистр R)</p>
+<p><code>STORE R, X</code> — со стола на склад (регистр R → память X)</p>
+<p><code>ADD R1, R2</code> — R1 = R1 + R2</p>
+<p><code>SUB R1, R2</code> — R1 = R1 − R2</p>
+<p><code>MUL R1, R2</code> — R1 = R1 × R2</p>
+<p><code>MOV R1, R2</code> — копия R2 в R1</p>
+<div class="tip">Результат всегда остаётся в <b>первом</b> регистре. Старое значение там пропадает.</div></div>
+<div class="card"><h2>Рецепт для любой формулы</h2>
+<p>1. Загрузи нужные числа (LOAD). 2. Посчитай по приоритету: сначала умножение, потом сложение. 3. Сохрани результат (STORE).</p>
+<button class="b" data-go="t2">Попробовать в симуляторе</button></div>
+</section>
+
+<section id="t2">
+<div class="card"><label for="pre"><b>Выбери задачу</b></label>
+<select id="pre"></select>
+<p id="story" class="sub"></p></div>
+<div class="card">
+<div class="lbl m">Память (склад). Значения можно менять</div>
+<div class="cells" id="mem"></div>
+<div class="lbl r">Регистры (рабочий стол)</div>
+<div class="cells" id="reg"></div></div>
+<div class="card"><b>Программа</b>
+<div class="prog" id="prog"></div>
+<textarea id="src" aria-label="Код программы" spellcheck="false" hidden></textarea>
+<div class="say" id="say" aria-live="polite">Нажми «Шаг», чтобы выполнить первую команду.</div>
+<div class="row"><button class="b" id="step">Шаг</button><button class="b alt" id="run">Выполнить всё</button><button class="b alt" id="rst">Сначала</button><button class="b alt" id="edit">Править код</button></div>
+<div class="res" id="out"></div></div>
+</section>
+
+<section id="t3">
+<div class="card"><h2>Где это встречается в жизни</h2>
+<p>Каждый раз, когда вы платите картой, считаете чек или смотрите баланс игры, под капотом идёт та же цепочка: достать числа, посчитать, записать итог.</p></div>
+<div class="card"><h3>Чек в кафе: X = A + B − C</h3>
+<p>A — кофе (10), B — десерт (5), C — скидка по карте (3). Касса делает LOAD, LOAD, ADD, LOAD, SUB, STORE. Итог: 12.</p></div>
+<div class="card"><h3>Поездка на группу: Y = (A + B) × C</h3>
+<p>Билет (A) плюс обед (B), умножить на число человек (C). Скобки — это порядок: сначала ADD, потом MUL.</p></div>
+<div class="card"><h3>Магазин: Z = A·B + C·D</h3>
+<p>Цена × количество для двух товаров. Две «мини-задачи» в разных регистрах, потом сложение.</p></div>
+<div class="card"><h3>Игра и телефон</h3>
+<p>Урон = сила × множитель, потом из здоровья вычитается урон. Приложение банка: баланс − платёж. Всё это те же LOAD, MUL, SUB, STORE.</p>
+<div class="tip">Как запомнить навсегда: <b>склад → стол → считаем → склад</b>. Если можешь сказать это вслух для любой формулы, ты понял тему.</div></div>
+<div class="card"><h3>Сделай сам: мини-тренажёр</h3>
+<p>Вычисли: «Сумма заказа = цена × кол-во». Какая команда стоит между двумя LOAD и STORE?</p>
+<div id="mini"></div></div>
+</section>
+
+<section id="t4">
+<div class="card"><h2>Задание 4. Ответы на вопросы</h2>
+<p class="sub">Сначала ответь сам, потом открой.</p>
+<details><summary>1. Почему нельзя A + B → Y прямо в памяти?</summary><p>Арифметическое устройство работает только с регистрами. Память медленная и далеко, поэтому данные сначала переносят в регистры (LOAD), считают, затем возвращают (STORE).</p></details>
+<details><summary>2. Сколько регистров нужно для задания 3?</summary><p>Достаточно трёх. R0=A, R1=B, MUL R0,R1. Затем R1=C, R2=D, MUL R1,R2, и ADD R0,R1. Можно обойтись и двумя, если сначала сохранить промежуточный результат в память, но это медленнее.</p></details>
+<details><summary>3. Что будет, если в ADD R0,R1 сначала загрузить C, а не A?</summary><p>Получится C + B вместо A + B. Для A=10, B=5, C=3 это 8 вместо 15. Машина выполняет команды буквально и не знает, что вы хотели.</p></details></div>
+<div class="card"><h2>Контрольные вопросы</h2>
+<details><summary>1. Почему важен приоритет операций?</summary><p>Команды выполняются строго по порядку. 2 + 3 × 4 = 14, а не 20. Если сначала сложить, получим неверный результат.</p></details>
+<details><summary>2. Как сокращение числа регистров влияет на производительность?</summary><p>Меньше регистров значит больше обращений к памяти (лишние LOAD/STORE). Память медленнее, поэтому программа работает дольше.</p></details>
+<details><summary>3. Может ли переменная быть в нескольких командах?</summary><p>Да. Для A·A + A: LOAD R0,A; LOAD R1,A; MUL R0,R1; LOAD R1,A; ADD R0,R1; STORE R0,Z. Значение в памяти не меняется, пока не сделать STORE.</p></details></div>
+<div class="card"><h2>Вывод для отчёта (шаблон)</h2>
+<p>Я составил последовательности машинных команд для арифметических выражений на модели процессора с регистрами. Я убедился, что вычисления выполняются только в регистрах, а память служит для хранения исходных данных и результата. Порядок команд определяет приоритет операций.</p></div>
+</section>
+</main>
+
+<script>
+const PRE={
+ex:{n:'Пример: Y = A + B',s:'Кофе (A) + десерт (B): сколько платить?',lab:{A:'кофе',B:'десерт',Y:'итого'},mem:{A:10,B:5,Y:0},code:'LOAD R0, A\nLOAD R1, B\nADD R0, R1\nSTORE R0, Y',res:'Y',f:m=>m.A+m.B},
+t1:{n:'Задание 1: X = A + B − C',s:'Чек: кофе + десерт − скидка.',lab:{A:'кофе',B:'десерт',C:'скидка',X:'к оплате'},mem:{A:10,B:5,C:3,X:0},code:'LOAD R0, A\nLOAD R1, B\nADD R0, R1\nLOAD R2, C\nSUB R0, R2\nSTORE R0, X',res:'X',f:m=>m.A+m.B-m.C},
+t2:{n:'Задание 2: Y = (A + B) × C',s:'Билет + обед, умножить на число человек.',lab:{A:'билет',B:'обед',C:'человек',Y:'бюджет'},mem:{A:10,B:5,C:3,Y:0},code:'LOAD R0, A\nLOAD R1, B\nADD R0, R1\nLOAD R2, C\nMUL R0, R2\nSTORE R0, Y',res:'Y',f:m=>(m.A+m.B)*m.C},
+t3:{n:'Задание 3: Z = A·B + C·D',s:'Два товара: цена × количество, затем сумма. Допиши программу сам: нажми «Править код».',lab:{A:'цена 1',B:'кол-во 1',C:'цена 2',D:'кол-во 2',Z:'итого'},mem:{A:10,B:5,C:3,D:2,Z:0},code:'LOAD R0, A\nLOAD R1, B\nMUL R0, R1\nLOAD R1, C\nLOAD R2, D\nMUL R1, R2\nADD R0, R1\nSTORE R0, Z',res:'Z',f:m=>m.A*m.B+m.C*m.D,own:1}
+};
+const $=id=>document.getElementById(id);
+let cur,mem,regs,pc,prog,done;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.t));
+document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>show(b.dataset.go));
+function show(t){document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id===t));document.querySelectorAll('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.t===t));scrollTo(0,0)}
+const sel=$('pre');for(const k in PRE){const o=document.createElement('option');o.value=k;o.textContent=PRE[k].n;sel.appendChild(o)}
+sel.onchange=()=>load(sel.value);
+function load(k){cur=PRE[k];$('story').textContent=cur.s;$('src').value=cur.code;$('src').hidden=true;$('edit').textContent='Править код';mem={...cur.mem};reset(true);buildMem()}
+function buildMem(){const el=$('mem');el.innerHTML='';for(const k in mem){const c=document.createElement('div');c.className='cell m';c.id='m'+k;const ro=k===cur.res;c.innerHTML=`<small>${cur.lab[k]||''}</small><b>${k}</b> `+(ro?`<span id="v${k}" class="mono">0</span>`:`<input type="number" id="v${k}" value="${mem[k]}" aria-label="${k}">`);el.appendChild(c)}
+for(const k in mem)if(k!==cur.res)$('v'+k).oninput=e=>{mem[k]=+e.target.value||0;reset()}}
+function parse(){const lines=$('src').value.split('\n').map(l=>l.split(';')[0].trim()).filter(Boolean);const out=[];for(const l of lines){const m=l.match(/^(LOAD|STORE|ADD|SUB|MUL|MOV)\s+(\w+)\s*,\s*(\w+)$/i);if(!m)return{err:'Не понимаю: «'+l+'». Формат: КОМАНДА R0, X'};const op=m[1].toUpperCase(),a=m[2].toUpperCase(),b=m[3].toUpperCase();const isR=s=>/^R[0-3]$/.test(s);
+if((op==='LOAD'||op==='STORE')&&(!isR(a)||isR(b)||!(b in mem)))return{err:op+' работает так: '+op+' R0, A (регистр, затем ячейка памяти). Проверь: «'+l+'»'};
+if(!['LOAD','STORE'].includes(op)&&(!isR(a)||!isR(b)))return{err:op+' работает только с регистрами. Сначала сделай LOAD. Строка: «'+l+'»'};out.push({t:l,op,a,b})}return{p:out}}
+function reset(silent){regs=[0,0,0,0].slice(0,3);pc=0;done=false;if(cur&&mem[cur.res]!==undefined&&cur){mem[cur.res]=0}const p=parse();prog=p.p||[];if(p.err){$('say').textContent=p.err;prog=[]}else if(!silent)$('say').textContent='Нажми «Шаг», чтобы выполнить первую команду.';if(silent)$('say').textContent='Нажми «Шаг», чтобы выполнить первую команду.';$('out').textContent='';render();flash()}
+function render(){const pr=$('prog');pr.innerHTML='';prog.forEach((c,i)=>{const d=document.createElement('div');d.textContent=c.t;d.className=i===pc&&!done?'cur':i<pc?'done':'';pr.appendChild(d)});const r=$('reg');r.innerHTML='';for(let i=0;i<3;i++){const c=document.createElement('div');c.className='cell r';c.id='r'+i;c.innerHTML=`<small>регистр</small><b>R${i}</b> <span class="mono">${regs[i]}</span>`;r.appendChild(c)}
+for(const k in mem){const v=$('v'+k);if(v&&v.tagName==='SPAN')v.textContent=mem[k]}}
+function flash(id){if(!id)return;const e=$(id);if(e){e.classList.add('flash');setTimeout(()=>e.classList.remove('flash'),700)}}
+function step(){if(done||!prog.length)return false;const c=prog[pc],ri=s=>+s[1];let msg='',f='';
+if(c.op==='LOAD'){regs[ri(c.a)]=mem[c.b];msg=`Со склада ${c.b} (${mem[c.b]}) на стол в ${c.a}.`;f='r'+ri(c.a)}
+else if(c.op==='STORE'){mem[c.b]=regs[ri(c.a)];msg=`Со стола ${c.a} (${regs[ri(c.a)]}) на склад в ${c.b}.`;f='m'+c.b}
+else{const x=regs[ri(c.a)],y=regs[ri(c.b)];let v;if(c.op==='ADD'){v=x+y;msg=`${c.a} = ${x} + ${y} = ${v}.`}else if(c.op==='SUB'){v=x-y;msg=`${c.a} = ${x} − ${y} = ${v}.`}else if(c.op==='MUL'){v=x*y;msg=`${c.a} = ${x} × ${y} = ${v}.`}else{v=y;msg=`${c.a} = копия ${c.b} = ${v}.`}regs[ri(c.a)]=v;f='r'+ri(c.a)}
+pc++;if(pc>=prog.length){done=true;const exp=cur.f(mem),got=mem[cur.res];$('out').innerHTML=got===exp?`<span class="ok">Верно: ${cur.res} = ${got}</span>`:`<span class="bad">Ожидали ${cur.res} = ${exp}, а получили ${got}. Проверь порядок команд и не забудь STORE.</span>`}
+$('say').textContent=msg;render();flash(f);return true}
+$('step').onclick=step;$('rst').onclick=()=>reset();
+$('run').onclick=()=>{let n=0;while(n++<200&&step());};
+$('edit').onclick=()=>{const t=$('src');t.hidden=!t.hidden;$('edit').textContent=t.hidden?'Править код':'Применить код';if(t.hidden)reset()};
+$('src').oninput=()=>{};
+sel.value='ex';load('ex');
+// mini quiz
+(function(){const q=$('mini'),o=[['MUL R0, R1',1],['ADD R0, R1',0],['SUB R0, R1',0]];o.forEach(([t,ok])=>{const b=document.createElement('button');b.className='opt mono';b.textContent=t;b.onclick=()=>{q.querySelectorAll('.opt').forEach(x=>x.className='opt mono');b.classList.add(ok?'right':'wrong');m.textContent=ok?'Верно. Цена × количество это умножение: LOAD цена, LOAD количество, MUL, STORE.':'Не то. Нужно умножение.'};q.appendChild(b)});const m=document.createElement('p');m.setAttribute('aria-live','polite');q.appendChild(m)})();
+</script>
+</body>
+</html>
